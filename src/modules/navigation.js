@@ -13,7 +13,7 @@ export const cd = async (path) => {
     process.env.RSS_CURRENT_DIRECTORY = process.cwd();
     printDirectory();
   } catch {
-    console.log('Operation failed. Please, enter a valid path!');
+    console.log('Invalid input. Please, enter a valid path!');
   }
 };
 
@@ -23,7 +23,7 @@ export const ls = async () => {
     { withFileTypes: true },
     (err, files) => {
       if (err) {
-        console.log(err.message);
+        console.log(`Operation failed. ${err.message}`);
       }
       files.forEach((file) => {
         console.log(file.name);
