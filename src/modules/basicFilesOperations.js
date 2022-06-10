@@ -154,7 +154,7 @@ export const rm = async (parameters) => {
 export const mv = async (parameters) => {
   const paths = parameters.split(' ');
   if (paths.length < 2) {
-    console.log('Invalid input. Enter valid old a new file names');
+    console.log('Invalid input. Enter valid old and new file names');
   } else {
     const oldFileName = paths[0];
     const destinationPath = paths[1];
