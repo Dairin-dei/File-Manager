@@ -3,11 +3,21 @@ import { printDirectory } from './printDirectory.js';
 
 export const getOSData = async (parameters) => {
   if (parameters.toLowerCase() === '--eol') {
-    console.log(`End-of-line marker is ${osFunctions.EOL}`);
+    console.log(`End-of-line marker is ${JSON.stringify(osFunctions.EOL)}`);
     printDirectory();
   } else if (parameters.toLowerCase() === '--cpus') {
+    const cpus = osFunctions.cpus();
     console.log('CPUs info:');
-    console.log(osFunctions.cpus());
+    console.log(`Overall amount of CPUS id: ${cpus.length}`);
+    console.log('[');
+    cpus.forEach((cpu, index) => {
+      console.log(' {');
+      console.log(`    model: ${cpu.model.trim()}`);
+      console.log(`    speed: ${cpu.speed / 1000} GHz`);
+      console.log('  }');
+    });
+    console.log(']');
+
     printDirectory();
   } else if (parameters.toLowerCase() === '--homedir') {
     console.log(`User homedir is ${osFunctions.homedir()}`);

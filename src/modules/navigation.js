@@ -8,7 +8,6 @@ export const up = async () => {
 
 export const cd = async (path) => {
   try {
-    console.log('cd', path);
     process.chdir(path.trim());
     process.env.RSS_CURRENT_DIRECTORY = process.cwd();
     printDirectory();

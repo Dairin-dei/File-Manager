@@ -3,14 +3,13 @@ import {
   stat,
   createReadStream,
   open,
-  writeFile,
-  close,
   rename,
-  copyFile,
   rm as remove,
+  createWriteStream,
 } from 'fs';
 import { dirname, extname, isAbsolute, join, basename } from 'path';
 import { printDirectory } from './printDirectory.js';
+import { findPaths } from './tools.js';
 
 export const cat = async (path) => {
   if (path === '') {
@@ -50,30 +49,17 @@ export const add = async (parameters) => {
     } else if (err) {
       console.log(`Operation failed. ${err.message}`);
     } else {
-      writeFile(parameters, '', (err) => {
-        if (err) {
-          console.log(`Operation failed. ${err.message}`);
-        } else {
-          close(file, (err) => {
-            if (err) {
-              console.log(`Operation failed. ${err.message}`);
-            } else {
-              printDirectory();
-            }
-          });
-        }
-      });
+      createWriteStream(parameters);
+      printDirectory();
     }
   });
 };
 
 export const rn = async (parameters) => {
-  const paths = parameters.split(' ');
-  if (paths.length < 2) {
-    console.log('Invalid input. Enter valid old a new file names');
-  } else {
-    const oldFilePath = paths[0];
-    let newFileName = paths[1];
+  const { oldPath, newPath } = findPaths(parameters);
+  if (oldPath !== '' && newPath !== '') {
+    const oldFilePath = oldPath;
+    let newFileName = newPath;
     access(oldFilePath, (err) => {
       if (err && err.code === 'ENOENT') {
         console.log(`Operation failed. File ${oldFilePath} doesn't exist`);
@@ -100,29 +86,29 @@ export const rn = async (parameters) => {
 };
 
 export const cp = async (parameters) => {
-  const paths = parameters.split(' ');
-  if (paths.length < 2) {
-    console.log('Invalid input. Enter valid old a new file names');
-  } else {
-    const oldFileName = paths[0];
-    const destinationPath = paths[1];
-    access(oldFileName, (err) => {
+  const { oldPath, newPath } = findPaths(parameters);
+  if (oldPath !== '' && newPath !== '') {
+    access(oldPath, (err) => {
       if (err && err.code === 'ENOENT') {
-        console.log(`Operation failed. File ${oldFileName} doesn't exist`);
+        console.log(`Operation failed. File ${oldPath} doesn't exist`);
       } else if (err) {
         console.log(`Operation failed. ${err.message}`);
       } else {
-        access(destinationPath, (err) => {
+        access(newPath, (err) => {
           if (err && err.code === 'ENOENT') {
-            console.log(
-              `Operation failed. Directory ${newFilePath} doesn't exist`
-            );
+            console.log(`Operation failed. Directory ${newPath} doesn't exist`);
           } else {
-            const newFilePath = join(destinationPath, basename(oldFileName));
-            copyFile(oldFileName, newFilePath, (err) => {
-              if (err) {
-                console.log(`Operation failed. ${err.message}`);
+            const newFilePath = join(newPath, basename(oldPath));
+            access(newFilePath, (err) => {
+              if (err === null) {
+                console.log(
+                  `Operation failed. File ${newFilePath} already exists`
+                );
               } else {
+                const fileWriteTo = createWriteStream(newFilePath, {
+                  flags: 'w',
+                });
+                createReadStream(oldPath).pipe(fileWriteTo);
                 printDirectory();
               }
             });
@@ -152,44 +138,36 @@ export const rm = async (parameters) => {
 };
 
 export const mv = async (parameters) => {
-  const paths = parameters.split(' ');
-  if (paths.length < 2) {
-    console.log('Invalid input. Enter valid old and new file names');
-  } else {
-    const oldFileName = paths[0];
-    const destinationPath = paths[1];
-    access(oldFileName, (err) => {
+  const { oldPath, newPath } = findPaths(parameters);
+  if (oldPath !== '' && newPath !== '') {
+    access(oldPath, (err) => {
       if (err && err.code === 'ENOENT') {
-        console.log(`Operation failed. File ${oldFileName} doesn't exist`);
+        console.log(`Operation failed. File ${oldPath} doesn't exist`);
       } else if (err) {
         console.log(`Operation failed. ${err.message}`);
       } else {
-        access(destinationPath, (err) => {
+        access(newPath, (err) => {
           if (err && err.code === 'ENOENT') {
             console.log(
               `Operation failed. Directory ${newFilePath} doesn't exist`
             );
           } else {
-            const newFilePath = join(destinationPath, basename(oldFileName));
-            copyFile(oldFileName, newFilePath, (err) => {
-              if (err) {
-                console.log(`Operation failed. ${err.message}`);
+            const newFilePath = join(newPath, basename(oldPath));
+            access(newFilePath, (err) => {
+              if (err === null) {
+                console.log(
+                  `Operation failed. File ${newFilePath} already exists`
+                );
               } else {
-                access(oldFileName, (err) => {
-                  if (err && err.code === 'ENOENT') {
-                    console.log(
-                      `Operation failed. File ${oldFileName} doesn't exist`
-                    );
-                  } else if (err) {
+                const fileWriteTo = createWriteStream(newFilePath, {
+                  flags: 'w',
+                });
+                createReadStream(oldPath).pipe(fileWriteTo);
+                remove(oldPath, (err) => {
+                  if (err) {
                     console.log(`Operation failed. ${err.message}`);
                   } else {
-                    remove(oldFileName, (err) => {
-                      if (err) {
-                        console.log(`Operation failed. ${err.message}`);
-                      } else {
-                        printDirectory();
-                      }
-                    });
+                    printDirectory();
                   }
                 });
               }

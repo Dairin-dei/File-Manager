@@ -1,7 +1,7 @@
 import { createInterface } from 'readline';
 import { cd, up, ls } from './modules/navigation.js';
 import { getOSData } from './modules/os.js';
-import { setBasicParameters } from './modules/parameters.js';
+import { setBasicParameters } from './modules/tools.js';
 import { add, cat, rn, cp, rm, mv } from './modules/basicFilesOperations.js';
 import { getHash } from './modules/hash.js';
 import { compress, decompress } from './modules/zip.js';

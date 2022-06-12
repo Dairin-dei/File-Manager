@@ -1,20 +1,15 @@
 import { createBrotliCompress, createBrotliDecompress } from 'zlib';
 import { access, createReadStream, createWriteStream, open } from 'fs';
-import { printDirectory } from './printDirectory.js';
 import { pipeline } from 'stream';
+import { printDirectory } from './printDirectory.js';
+import { findPaths } from './tools.js';
 
 export const compress = async (parameters) => {
-  const paths = parameters.split(' ');
-  if (paths.length < 2) {
-    console.log(
-      'Invalid input. Enter valid path to file and archive destination'
-    );
-  } else {
-    const oldFilePath = paths[0];
-    let newFileName = paths[1];
+  const { oldPath, newPath } = findPaths(parameters);
+  if (oldPath !== '' && newPath !== '') {
     const brotli = createBrotliCompress();
-    const readStream = createReadStream(oldFilePath, 'utf-8');
-    const writeStream = createWriteStream(newFileName);
+    const readStream = createReadStream(oldPath, 'utf-8');
+    const writeStream = createWriteStream(newPath);
     pipeline(readStream, brotli, writeStream, (err) => {
       if (err) {
         console.log(`Operation failed. ${err.message}`);
@@ -27,25 +22,19 @@ export const compress = async (parameters) => {
 };
 
 export const decompress = async (parameters) => {
-  const paths = parameters.split(' ');
-  if (paths.length < 2) {
-    console.log(
-      'Invalid input. Enter valid path to file and archive destination'
-    );
-  } else {
-    const oldFilePath = paths[0];
-    let newFileName = paths[1];
-    access(oldFilePath, (err) => {
+  const { oldPath, newPath } = findPaths(parameters);
+  if (oldPath !== '' && newPath !== '') {
+    access(oldPath, (err) => {
       if (err && err.code === 'ENOENT') {
-        console.log(`Operation failed. File ${oldFilePath} doesn't exist`);
+        console.log(`Operation failed. File ${oldPath} doesn't exist`);
       } else {
-        open(newFileName, (err) => {
+        open(newPath, (err) => {
           if (err === null) {
             console.log('Operation failed. File already exists');
           } else {
             const unBrotli = createBrotliDecompress();
-            const readStream = createReadStream(oldFilePath);
-            const writeStream = createWriteStream(newFileName);
+            const readStream = createReadStream(oldPath);
+            const writeStream = createWriteStream(newPath);
             readStream.pipe(unBrotli).pipe(writeStream);
             printDirectory();
           }
